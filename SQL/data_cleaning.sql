@@ -13,23 +13,25 @@ SELECT
 FROM cfpb
 WHERE
     Date_received IS NULL OR
-    Product IS NULL OR
-    Sub_product IS NULL OR
-    Issue IS NULL OR
-    Sub_issue IS NULL OR
-    Consumer_complaint_narrative IS NULL OR
-    Company_public_response IS NULL OR
-    Company IS NULL OR
-    State IS NULL OR
-    Zip_code IS NULL OR
-    Tags IS NULL OR
-    Submitted_via IS NULL OR
-    Date_sent_to_company IS NULL OR
-    Company_response_to_consumer IS NULL OR
+    Product IS NULL OR Product = 'None' OR
+    Sub_product IS NULL OR Sub_product = 'None' OR
+    Issue IS NULL OR Issue = 'None' OR
+    Sub_issue IS NULL OR Sub_issue = 'None' OR
+    Consumer_complaint_narrative IS NULL OR Company_public_response = 'None' OR
+    Company_public_response IS NULL OR Company_public_response = 'None' OR
+    Company IS NULL OR Company = 'None' OR
+    State IS NULL OR State = 'None' OR
+    Zip_code IS NULL OR Zip_code = 'None' OR
+    Tags IS NULL OR Tags = 'None' OR
+    Submitted_via IS NULL OR Submitted_via = 'None' OR
+    Date_sent_to_company IS NULL OR 
+    Company_response_to_consumer IS NULL OR Company_response_to_consumer = 'None' OR
     Timely_response IS NULL OR
     Complaint_ID IS NULL
--- there are 1370 null values
+-- Total 26295 Null or None values found in the table
 
+
+-- Create view with nessessary columns for analysis
 CREATE OR REPLACE VIEW cfpb_analysis AS
 SELECT
     complaint_id,
@@ -44,13 +46,14 @@ FROM cfpb;
 -- checking where null values are located in the table
 SELECT
     SUM(CASE WHEN date_received IS NULL THEN 1 ELSE 0 END) AS date_received_nulls,
-    SUM(CASE WHEN product IS NULL THEN 1 ELSE 0 END) AS product_nulls,
-    SUM(CASE WHEN issue IS NULL THEN 1 ELSE 0 END) AS issue_nulls,
-    SUM(CASE WHEN company IS NULL THEN 1 ELSE 0 END) AS company_nulls,
+    SUM(CASE WHEN product IS NULL OR product = 'None' THEN 1 ELSE 0 END) AS product_nulls,
+    SUM(CASE WHEN issue IS NULL OR issue = 'None' THEN 1 ELSE 0 END) AS issue_nulls,
+    SUM(CASE WHEN company IS NULL OR company = 'None' THEN 1 ELSE 0 END) AS company_nulls,
     SUM(CASE WHEN timely_response IS NULL THEN 1 ELSE 0 END) AS timely_response_nulls,
-    SUM(CASE WHEN state IS NULL THEN 1 ELSE 0 END) AS state_nulls
+    SUM(CASE WHEN state IS NULL OR state = 'None' THEN 1 ELSE 0 END) AS state_nulls
 FROM cfpb_analysis
--- consumer_complaint_narrative has the most null values with 13730
+-- 1 issue and 273 state null values found in the table
+
 
 
 SELECT
@@ -107,14 +110,17 @@ GROUP BY timely_response
 
 
 -- state
+WITH chad AS(
 SELECT
     state,
-    COUNT(*) AS state_count
-FROM cfpb_analysis
-GROUP BY state
-ORDER BY state_count DESC
+    CASE WHEN state = 'None' THEN 'Unkown'
+    WHEN state IN ('GU', 'PR', 'VI', 'UNITED STATES MINOR OUTLYING ISLANDS') THEN 'US Territories'
+    WHEN state IN ('AE','AP') THEN 'US Military'
+    ELSE state END AS state_group
+FROM cfpb_analysis 
+)
 
 SELECT
-    COUNT(DISTINCT state) AS distinct_states
-FROM cfpb_analysis
+    COUNT(DISTINCT state_group) AS distinct_states
+FROM chad
 
