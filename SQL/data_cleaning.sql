@@ -110,17 +110,13 @@ GROUP BY timely_response
 
 
 -- state
-WITH chad AS(
+CREATE OR REPLACE VIEW cfpb_analysis_clean AS
 SELECT
-    state,
+    *,
     CASE WHEN state = 'None' THEN 'Unkown'
     WHEN state IN ('GU', 'PR', 'VI', 'UNITED STATES MINOR OUTLYING ISLANDS') THEN 'US Territories'
     WHEN state IN ('AE','AP') THEN 'US Military'
     ELSE state END AS state_group
 FROM cfpb_analysis 
-)
 
-SELECT
-    COUNT(DISTINCT state_group) AS distinct_states
-FROM chad
 
